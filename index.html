@@ -143,6 +143,7 @@ header.top p { margin: 0; color: var(--muted); }
 .list .pname { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list .body { display: grid; gap: 5px; min-width: 0; }
 .list input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--turf); }
+.list li.empty-list { display: block; color: var(--muted); font-size: 14px; padding: 12px 0; }
 .del { border: 0; background: none; color: var(--muted); font-size: 20px; line-height: 1; padding: 4px 8px; border-radius: 6px; }
 .del:hover { color: var(--r-att); background: var(--surface-2); }
 .note { font-size: 13px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -227,10 +228,6 @@ header.top p { margin: 0; color: var(--muted); }
       </div>
       <div class="avail" id="avail"></div>
       <button class="btn primary" id="genBtn">Genera squadre</button>
-      <div class="note" id="exNote" hidden>
-        <span>Questi sono giocatori di esempio.</span>
-        <button class="btn small" id="clearBtn">Svuota rosa</button>
-      </div>
       <form class="addform" id="addForm" autocomplete="off">
         <span class="label">Nuovo giocatore</span>
         <div class="addrow">
@@ -270,9 +267,7 @@ function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { co
 function load() { try { const s = JSON.parse(localStorage.getItem(LS)); return s && s.players ? s : null; } catch (e) { return null; } }
 function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
 function seed() {
-  const ex = [['Luca', 'POR'], ['Andrea', 'POR DIF'], ['Marco', 'DIF'], ['Giovanni', 'DIF CEN'], ['Paolo', 'CEN'], ['Simone', 'CEN ATT'],
-    ['Davide', 'ATT'], ['Matteo', 'DIF'], ['Federico', 'CEN'], ['Alessio', 'ATT CEN'], ['Stefano', 'DIF ATT'], ['Riccardo', 'POR CEN']];
-  return { n: 5, form: '2-2', example: true, players: ex.map(([name, r]) => ({ id: uid(), name, roles: r.split(' '), on: true })), A: [], B: [], bench: [] };
+  return { n: 5, form: '2-2', players: [], A: [], B: [], bench: [] };
 }
 const byId = id => S.players.find(p => p.id === id);
 
@@ -413,9 +408,9 @@ function render() {
     const have = on.filter(p => p.roles.includes(r)).length, want = need[r] * 2;
     return `<span class="${have < want ? 'low' : ''}" title="${ROLE_NAME[r]}: ${have} disponibili, ${want} necessari">${r} ${have}/${want}</span>`;
   }).join('');
-  $('exNote').hidden = !S.example;
 
   const ul = $('list'); ul.innerHTML = '';
+  if (!S.players.length) ul.innerHTML = '<li class="empty-list">Nessun giocatore. Scrivi il nome, scegli i ruoli e premi Aggiungi.</li>';
   S.players.forEach(p => {
     const li = document.createElement('li');
     if (!p.on) li.className = 'out';
@@ -462,13 +457,11 @@ $('addForm').addEventListener('submit', e => {
   e.preventDefault();
   const name = $('nameIn').value.trim();
   if (!name) { $('nameIn').focus(); return; }
-  if (S.example) { S.players = []; resetTeams(); S.example = false; }
   const p = { id: uid(), name, roles: ROLES.filter(r => newRoles.has(r)), on: true };
   S.players.push(p); addToBench(p.id);
   $('nameIn').value = ''; $('nameIn').focus();
   save(); render();
 });
-$('clearBtn').onclick = () => { S.players = []; S.example = false; resetTeams(); sel = null; save(); render(); $('nameIn').focus(); };
 $('genBtn').onclick = () => { generate(); render(); };
 
 // copia formazioni per la chat
@@ -495,7 +488,9 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = fals
 })();
 
 S = load();
-if (!S) { S = seed(); resetTeams(); generate(); }
+if (!S) { S = seed(); resetTeams(); }
+// chi aveva aperto la versione con i nomi di esempio riparte da rosa vuota
+if (S.example) { S = seed(); resetTeams(); save(); }
 renderNewRoles();
 render();
 </script>
