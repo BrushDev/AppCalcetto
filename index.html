@@ -266,8 +266,14 @@ function uid() { return Math.random().toString(36).slice(2, 9); }
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function load() { try { const s = JSON.parse(localStorage.getItem(LS)); return s && s.players ? s : null; } catch (e) { return null; } }
 function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
+const DEFAULT_PLAYERS = [
+  ['Bruno', 'CEN ATT'], ['Danilo', 'DIF CEN ATT'], ['Rino', 'POR'], ['Carlo', 'POR'], ['Luca', 'ATT'],
+  ['Gigginho', 'ATT'], ['Enzo', 'CEN'], ['Roby', 'DIF'], ['Maestro', 'DIF CEN'], ['Carmine', 'DIF CEN'],
+  ['Raffo', 'DIF CEN'], ['Benny', 'DIF CEN'], ['Leo', 'ATT'], ['Piero', 'CEN'], ['Salvatore', 'DIF'],
+  ['Emi', 'CEN'], ['Gianni', 'DIF'], ['AndreaG', 'DIF CEN']
+];
 function seed() {
-  return { n: 5, form: '2-2', players: [], A: [], B: [], bench: [] };
+  return { n: 5, form: '2-2', players: DEFAULT_PLAYERS.map(([name, r]) => ({ id: uid(), name, roles: r.split(' '), on: true })), A: [], B: [], bench: [] };
 }
 const byId = id => S.players.find(p => p.id === id);
 
